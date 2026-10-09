@@ -104,7 +104,7 @@ class TodoRepositoryTest extends TestCase
 
         Log::shouldReceive('warning')
             ->once()
-            ->withArgs(fn ($msg) => mb_strpos((string) $msg, '12') !== false);
+            ->withArgs(fn ($msg) => str_contains((string) $msg, '12'));
 
         $repo = new class extends TodoRepository
         {

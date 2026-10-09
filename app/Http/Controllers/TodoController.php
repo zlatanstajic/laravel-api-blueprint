@@ -60,15 +60,15 @@ class TodoController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'completed' => ['boolean'],
+        ]);
+
+        $data['user_id'] = $request->user()->id;
+
         try {
-            $data = $request->validate([
-                'title' => ['required', 'string', 'max:255'],
-                'description' => ['nullable', 'string'],
-                'completed' => ['boolean'],
-            ]);
-
-            $data['user_id'] = $request->user()->id;
-
             return $this->successResponse(
                 data: new TodoResource($this->todoService->createTodo($data)),
                 code: Response::HTTP_CREATED
@@ -83,13 +83,13 @@ class TodoController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
-        try {
-            $data = $request->validate([
-                'title' => ['sometimes', 'required', 'string', 'max:255'],
-                'description' => ['nullable', 'string'],
-                'completed' => ['boolean'],
-            ]);
+        $data = $request->validate([
+            'title' => ['sometimes', 'required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'completed' => ['boolean'],
+        ]);
 
+        try {
             return $this->successResponse(
                 new TodoResource($this->todoService->updateTodo($id, $data))
             );

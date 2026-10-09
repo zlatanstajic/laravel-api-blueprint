@@ -5,7 +5,6 @@ declare(strict_types=1);
 use Rector\Config\RectorConfig;
 use RectorLaravel\Rector\FuncCall\RemoveDumpDataDeadCodeRector;
 use RectorLaravel\Set\LaravelSetList;
-use RectorLaravel\Set\LaravelSetProvider;
 
 return RectorConfig::configure()
     ->withPaths([
@@ -18,8 +17,10 @@ return RectorConfig::configure()
         __DIR__.'/routes',
         __DIR__.'/tests',
     ])
+    ->withSkip([
+        __DIR__.'/bootstrap/cache',
+    ])
     ->withPhpSets()
-    ->withSetProviders(LaravelSetProvider::class)
     ->withComposerBased(laravel: true/** other options */)
     ->withSets([
         LaravelSetList::LARAVEL_CODE_QUALITY,

@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "zlatanstajic/todo-api",
+    "name": "zlatanstajic/laravel-api-blueprint",
     "type": "project",
-    "description": "A simple Todo API built with Laravel 12.",
+    "description": "Laravel API Blueprint: a token-authenticated todo API built with Laravel 13.",
     "keywords": ["laravel", "framework", "sanctum", "example", "todo", "api"],
     "license": "MIT",
     "authors": [
@@ -12,26 +12,27 @@
         }
     ],
     "require": {
-        "php": "^8.2",
-        "laravel/framework": "^12.0",
+        "php": "8.5.*",
+        "laravel/framework": "^13.0",
         "laravel/sanctum": "^4.0",
-        "laravel/tinker": "^2.10.1"
+        "laravel/tinker": "^3.0"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^4.0",
         "barryvdh/laravel-ide-helper": "^3.6",
         "dedoc/scramble": "^0.13.5",
-        "driftingly/rector-laravel": "^2.1",
+        "driftingly/rector-laravel": "^2.6",
         "fakerphp/faker": "^1.23",
-        "larastan/larastan": "3.2.*",
-        "laravel/boost": "^1.8",
+        "heyosseus/sloppy": "^1.6",
+        "larastan/larastan": "^3.0",
+        "laravel/boost": "^2.0",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.13",
         "laravel/sail": "^1.41",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
         "peckphp/peck": "^0.2.0",
-        "phpunit/phpunit": "^11.5.3"
+        "phpunit/phpunit": "^12.0"
     },
     "autoload": {
         "psr-4": {
@@ -49,10 +50,6 @@
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
-        ],
-        "post-install-cmd": [
-            "cp .extras/git/pre-commit .git/hooks/pre-commit || true",
-            "@php artisan optimize"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
@@ -80,17 +77,20 @@
             "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" --names=server,queue,logs"
         ],
         "test": [
+            "@putenv CACHE_STORE=array",
             "@artisan:clear",
             "@test:rector",
             "@test:peck",
             "@test:pint",
             "@test:phpstan",
+            "@test:sloppy",
             "@test:phpunit"
         ],
         "test:rector": "./vendor/bin/rector process --dry-run",
         "test:peck": "vendor/bin/peck",
         "test:pint": "./vendor/bin/pint --parallel --test",
         "test:phpstan": "vendor/bin/phpstan analyse",
+        "test:sloppy": "vendor/bin/sloppy scan --no-interaction --fail-on=high",
         "test:phpunit": "php artisan test --coverage --min=100",
         "fix": [
             "@fix:rector",

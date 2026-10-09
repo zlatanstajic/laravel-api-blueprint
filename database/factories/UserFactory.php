@@ -45,9 +45,9 @@ class UserFactory extends Factory
     public function admin(): static
     {
         return $this->state(fn () => [
-            'name' => env('ADMIN_NAME', 'Admin'),
-            'email' => env('ADMIN_EMAIL', 'admin@example.com'),
-            'password' => Hash::make(env('ADMIN_PASSWORD', 'admin')),
+            'name' => config('app.admin.name'),
+            'email' => config('app.admin.email'),
+            'password' => Hash::make(config('app.admin.password')),
         ]);
     }
 }

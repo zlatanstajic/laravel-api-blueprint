@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "3aeca4c0-65ef-4d73-b2a0-e4614e27e943",
-		"name": "todo-api",
+		"name": "laravel-api-blueprint",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "14763304"
 	},
@@ -40,7 +40,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"admin\"\n}",
+							"raw": "{\n    \"email\": \"{{ADMIN_EMAIL}}\",\n    \"password\": \"{{ADMIN_PASSWORD}}\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"

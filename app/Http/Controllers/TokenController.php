@@ -24,12 +24,12 @@ class TokenController extends Controller
      */
     public function create(Request $request): JsonResponse
     {
-        try {
-            $data = $request->validate([
-                'email' => ['required', 'email'],
-                'password' => ['required', 'string', 'min:5'],
-            ]);
+        $data = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string', 'min:5'],
+        ]);
 
+        try {
             return $this->successResponse([
                 'token' => $this->tokenService->authenticate(
                     $data['email'],

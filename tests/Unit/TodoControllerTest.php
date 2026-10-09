@@ -7,15 +7,18 @@ namespace Tests\Unit;
 use App\Http\Controllers\TodoController;
 use App\Models\Todo;
 use App\Services\TodoService;
+use Closure;
 use Exception;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\StreamedEvent;
 use Mockery;
 use PHPUnit\Framework\TestCase;
 use ReflectionException;
 use ReflectionMethod;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use TypeError;
 
 class TodoControllerTest extends TestCase
@@ -58,6 +61,11 @@ class TodoControllerTest extends TestCase
             public function jsonp($callback, $data = [], $status = 200, array $headers = [], $options = 0)
             {
                 return new JsonResponse([$callback, $data], $status);
+            }
+
+            public function eventStream(Closure $callback, array $headers = [], StreamedEvent|string|null $endStreamWith = '</stream>'): StreamedResponse
+            {
+                return new StreamedResponse($callback, 200, $headers);
             }
 
             public function stream($callback, $status = 200, array $headers = [])

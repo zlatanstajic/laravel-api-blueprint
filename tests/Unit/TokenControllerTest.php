@@ -6,13 +6,16 @@ namespace Tests\Unit;
 
 use App\Http\Controllers\TokenController;
 use App\Services\TokenService;
+use Closure;
 use Exception;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\StreamedEvent;
 use Mockery;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TokenControllerTest extends TestCase
 {
@@ -53,6 +56,11 @@ class TokenControllerTest extends TestCase
                 array $headers = [], $options = 0)
             {
                 return new JsonResponse([$callback, $data], $status);
+            }
+
+            public function eventStream(Closure $callback, array $headers = [], StreamedEvent|string|null $endStreamWith = '</stream>'): StreamedResponse
+            {
+                return new StreamedResponse($callback, 200, $headers);
             }
 
             public function stream($callback, $status = 200,

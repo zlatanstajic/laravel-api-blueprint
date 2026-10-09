@@ -5,7 +5,7 @@ declare(strict_types=1);
 return [
     'default' => [
         'success' => 'Success',
-        'welcome' => 'Welcome to the Todo API',
+        'welcome' => 'Welcome to the Laravel API Blueprint',
     ],
     'error' => [
         'invalid_credentials' => 'Invalid credentials',

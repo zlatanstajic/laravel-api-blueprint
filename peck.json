@@ -4,7 +4,9 @@
         "words": [
             "php",
             "filesystems",
-            "todos"
+            "todos",
+            "img",
+            "og"
         ],
         "paths": []
     }

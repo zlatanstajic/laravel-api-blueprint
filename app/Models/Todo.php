@@ -13,21 +13,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Todo Model
  */
+#[\Illuminate\Database\Eloquent\Attributes\Fillable([
+    'user_id',
+    'title',
+    'description',
+    'completed',
+])]
 class Todo extends Model
 {
     use HasFactory, SoftDeletes;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'user_id',
-        'title',
-        'description',
-        'completed',
-    ];
 
     /**
      * The "booted" method of the model.

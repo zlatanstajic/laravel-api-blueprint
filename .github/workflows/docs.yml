@@ -1,0 +1,105 @@
+name: Quality and docs
+
+on:
+  push:
+    branches:
+      - master
+      - 'issues/**'
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  APP_ENV: testing
+  CACHE_STORE: array
+
+# Never let two Pages deployments race; queue them instead.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  quality:
+    name: Composer quality gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pdo_sqlite
+          coverage: pcov
+          tools: composer:v2
+
+      - name: Install spelling tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y aspell aspell-en
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress --no-scripts
+
+      - name: Set temporary application key
+        run: php -r 'echo "APP_KEY=base64:".base64_encode(random_bytes(32)).PHP_EOL;' >> "$GITHUB_ENV"
+
+      - name: Run quality gate
+        run: composer test
+
+  build:
+    name: Build static documentation
+    needs: quality
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    env:
+      DB_CONNECTION: sqlite
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_sqlite
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress --no-scripts
+
+      # The runner context is not available in job-level env, so set the path here.
+      - name: Prepare documentation database
+        run: |
+          export DB_DATABASE="$RUNNER_TEMP/docs.sqlite"
+          echo "DB_DATABASE=$DB_DATABASE" >> "$GITHUB_ENV"
+          touch "$DB_DATABASE"
+          php artisan migrate --force
+
+      - name: Build documentation
+        run: php artisan docs:build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/docs
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

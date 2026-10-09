@@ -5,7 +5,7 @@ declare(strict_types=1);
 return [
     'default' => [
         'success' => 'Uspeh',
-        'welcome' => 'Dobrodošli u Todo API',
+        'welcome' => 'Dobrodošli u Laravel API Blueprint',
     ],
     'error' => [
         'invalid_credentials' => 'Neispravni podaci za prijavu',
