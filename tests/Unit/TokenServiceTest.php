@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use App\Exceptions\User\UserInvalidCredentialsException;
-use App\Exceptions\User\UserNotFoundException;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use App\Services\TokenService;
@@ -16,6 +15,22 @@ use PHPUnit\Framework\TestCase;
 
 class TokenServiceTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Hash::swap(Mockery::mock(\Illuminate\Contracts\Hashing\Hasher::class));
+        $container = new \Illuminate\Container\Container;
+        \Illuminate\Container\Container::setInstance($container);
+        $container->singleton('translator', fn () => new class
+        {
+            public function get($key, $replace = [], $locale = null)
+            {
+                return 'Invalid credentials';
+            }
+        });
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();
@@ -55,28 +70,20 @@ class TokenServiceTest extends TestCase
         );
     }
 
-    public function test_authenticate_throws_not_found(): void
+    public function test_authenticate_rejects_unknown_email_with_invalid_credentials(): void
     {
+        Hash::shouldReceive('make')->once()->with('Authentication timing padding')->andReturn('discarded-hash');
+        Hash::shouldReceive('check')->never();
+
         $repo = Mockery::mock(UserRepository::class);
         $repo->shouldReceive('findByEmail')
             ->once()
             ->with('x@x.x')
             ->andReturnNull();
 
-        // Provide translator binding used by exception construction.
-        $c = new \Illuminate\Container\Container;
-        \Illuminate\Container\Container::setInstance($c);
-        $c->singleton('translator', fn () => new class
-        {
-            public function get($key, $replace = [], $locale = null)
-            {
-                return 'not found';
-            }
-        });
-
         $service = new TokenService($repo);
 
-        $this->expectException(UserNotFoundException::class);
+        $this->expectException(UserInvalidCredentialsException::class);
 
         $service->authenticate('x@x.x', 'pw');
     }

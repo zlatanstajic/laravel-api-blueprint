@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "df5b94fd3edfe03e3abf6dbd0ba272f9",
+    "content-hash": "fcc8378be433ecd9378ebf37bb3eb07a",
     "packages": [
         {
             "name": "brick/math",
@@ -6154,6 +6154,88 @@
         }
     ],
     "packages-dev": [
+        {
+            "name": "albertoarena/laravel-truss",
+            "version": "v1.15.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/albertoarena/laravel-truss.git",
+                "reference": "413fd7d2259f0b7720ee77d82094eb327f237c4c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/albertoarena/laravel-truss/zipball/413fd7d2259f0b7720ee77d82094eb327f237c4c",
+                "reference": "413fd7d2259f0b7720ee77d82094eb327f237c4c",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^12.0 || ^13.0",
+                "illuminate/support": "^12.0 || ^13.0",
+                "php": "^8.2",
+                "spatie/laravel-package-tools": "^1.16"
+            },
+            "require-dev": {
+                "laravel/mcp": "^1.0",
+                "laravel/pint": "^1.18",
+                "orchestra/testbench": "^10.0 || ^11.0",
+                "pestphp/pest": "^3.5",
+                "symfony/console": "^7.0 || ^8.0"
+            },
+            "suggest": {
+                "laravel/mcp": "Enables the optional read-only, structure-only Truss MCP server (Truss as AI context). Opt in with `composer require laravel/mcp`. Needs Laravel >= 12.41.1 or 13."
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "AlbertoArena\\Truss\\TrussServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "AlbertoArena\\Truss\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Alberto Arena",
+                    "email": "arena.alberto@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A live database structure viewer for Laravel. Renders your schema (never data) as a scrollable, zoomable ER diagram.",
+            "homepage": "https://trussphp.com",
+            "keywords": [
+                "DBML",
+                "data-dictionary",
+                "database",
+                "database-diagram",
+                "er-diagram",
+                "erd",
+                "introspection",
+                "laravel",
+                "mermaid",
+                "migrations",
+                "schema"
+            ],
+            "support": {
+                "docs": "https://trussphp.com",
+                "issues": "https://github.com/albertoarena/laravel-truss/issues",
+                "source": "https://github.com/albertoarena/laravel-truss"
+            },
+            "funding": [
+                {
+                    "url": "https://ko-fi.com/albertoarena",
+                    "type": "ko-fi"
+                }
+            ],
+            "time": "2026-10-17T12:12:29+00:00"
+        },
         {
             "name": "barryvdh/laravel-debugbar",
             "version": "v4.4.4",

@@ -26,6 +26,7 @@ A token-authenticated Laravel REST API for managing personal todo items. Laravel
   - [Examples](#examples)
 - [Postman Collection](#postman-collection)
 - [API Documentation](#api-documentation)
+- [Database Schema Viewer](#database-schema-viewer)
 - [Testing](#testing)
   - [Git Hooks](#git-hooks)
 - [Open Graph Image](#open-graph-image)
@@ -38,10 +39,10 @@ A token-authenticated Laravel REST API for managing personal todo items. Laravel
 
 - **Token authentication:** Exchange credentials for a Laravel Sanctum personal access token and call protected endpoints with a bearer header.
 - **Todo resource:** Create, list, read, update, and delete todos through a conventional `apiResource` route set.
-- **Per-user scoping:** A `UserScope` global scope constrains every todo query to the authenticated user, so one account never reads another's records.
+- **Per-user scoping:** Protected todo routes combine `auth:sanctum` with a `UserScope` global scope to constrain queries to the authenticated user. The scope is inactive without authentication; console commands and jobs must establish ownership explicitly.
 - **Layered design:** Controllers delegate to services, services delegate to repositories, and only repositories touch Eloquent.
-- **Typed domain errors:** Dedicated exceptions carry HTTP status codes into the JSON error response instead of leaking framework messages.
-- **Consistent envelopes:** API resources emit a stable `type` / `id` / `attributes` shape; the base controller wraps success in `data` and failure in `error`. Invalid input returns a 422 with Laravel's `message` and `errors` fields.
+- **Typed domain errors:** Dedicated exceptions carry translated messages and HTTP status codes into the JSON error response.
+- **Consistent envelopes:** API resources emit a stable `type` / `id` / `attributes` shape; the base controller wraps success in `data` and failure in `error`. Invalid input returns a 422 with Laravel's `message` and `errors` fields. Unexpected controller failures return a generic translated 500 response without internal exception details. Error logs record only exception type and source file/line, excluding exception messages, request data, and traces.
 - **Soft deletes:** Deleted todos are retained in the database rather than destroyed.
 - **Rate limiting:** Global throttling on the API group with a stricter limit on token issuance.
 - **Localized messages:** Response strings resolve through translation files for English and Serbian.
@@ -57,7 +58,7 @@ A token-authenticated Laravel REST API for managing personal todo items. Laravel
 - **Authentication:** Laravel Sanctum personal access tokens
 - **Database:** SQLite by default; any Laravel-supported driver via `.env`
 - **Testing:** PHPUnit with a required minimum coverage of 100%
-- **Quality:** Rector, Peck, Laravel Pint, PHPStan/Larastan, and Sloppy
+- **Quality:** Rector, Peck, Laravel Pint, PHPStan/Larastan (level 6), and Sloppy
 - **Documentation:** Scramble (OpenAPI) and Laravel Boost
 
 [⬆ back to top](#table-of-contents)
@@ -70,7 +71,7 @@ A token-authenticated Laravel REST API for managing personal todo items. Laravel
 
 - PHP 8.5.x only, with the extensions required by [`composer.json`](composer.json), for both the CLI and web server
 - Composer 2
-- Node.js 20 or newer with npm, for the Husky Git hooks
+- Node.js 20 or newer with npm, for the Husky Git hooks and Postman generation
 - Python 3 with [Pillow](https://pypi.org/project/pillow/), only to regenerate the [Open Graph image](#open-graph-image)
 
 ### Local Setup
@@ -125,7 +126,7 @@ php artisan serve
 
 ## API
 
-All routes are throttled to 60 requests per minute. Token issuance is throttled to 3 requests per minute. Todo routes require the `auth:sanctum` middleware and operate exclusively on the authenticated user's records.
+All routes are throttled to 60 requests per minute. Token issuance is throttled to 3 requests per minute. The two throttles use separate counters: token attempts also count once toward the global limit, while other API requests do not consume the token allowance. Todo routes require the `auth:sanctum` middleware and operate exclusively on the authenticated user's records.
 
 ### Endpoints
 
@@ -138,6 +139,8 @@ All routes are throttled to 60 requests per minute. Token issuance is throttled 
 | `GET` | `/api/todos/{id}` | Bearer | Read a single todo |
 | `PUT`/`PATCH` | `/api/todos/{id}` | Bearer | Update a todo |
 | `DELETE` | `/api/todos/{id}` | Bearer | Soft delete a todo |
+
+Unknown email addresses and incorrect passwords both return `401` with `{"error":"Invalid credentials"}` in English. Since API version 1.1.0, an unknown email no longer returns a distinct 404 response. Unknown-email attempts also perform password hashing with the configured algorithm and cost to avoid the fast rejection path. This reduces timing differences; it does not guarantee identical response times, especially when existing password hashes use older costs.
 
 ### Todo Fields
 
@@ -160,6 +163,8 @@ curl -X POST http://localhost:8000/api/tokens \
     -H "Content-Type: application/json" \
     -d '{"email":"<your-admin-email>","password":"secret"}'
 ```
+
+Tokens expire after 24 hours. Sanctum rejects expired or revoked tokens, invalid secrets, and tokens belonging to deleted users.
 
 Use the returned bearer token to call protected endpoints:
 
@@ -185,8 +190,27 @@ curl -X POST http://localhost:8000/api/todos \
 
 A ready-to-use Postman collection and environment live in the [`postman`](postman) directory.
 
-- **Collection:** [`laravel-api-blueprint.postman_collection.json`](postman/laravel-api-blueprint.postman_collection.json) contains requests for authentication, user info, and every Todo operation.
+- **Collection:** [`laravel-api-blueprint.postman_collection.json`](postman/laravel-api-blueprint.postman_collection.json) contains requests for authentication, the welcome message, and every Todo operation.
 - **Environment:** [`laravel-api-blueprint-development.postman_environment.json`](postman/laravel-api-blueprint-development.postman_environment.json) is pre-configured with the base API URL. Fill in `ADMIN_EMAIL` and `ADMIN_PASSWORD` with the values from your `.env`; the token request stores the returned token in `ACCESS_TOKEN`.
+
+The collection is generated from Scramble's OpenAPI document with a dependency-free Node.js exporter. After changing routes or validation, regenerate it with:
+
+```bash
+composer docs:postman
+```
+
+This builds the documentation against your migrated development database and rewrites the collection. It preserves the `BASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `ACCESS_TOKEN` variable names. Set `TODO_ID` to a todo belonging to your account before using an item request. The token request clears a previous token when login fails; credentials are supplied only through your private Postman environment.
+
+The exporter supports the JSON request schemas used by this API, including local schema references. It fails explicitly on unsupported schemas or remote references rather than generating misleading requests.
+
+To verify an existing documentation build without rewriting the collection:
+
+```bash
+npm run test:postman
+npm run postman:check
+```
+
+CI runs both checks after generating the OpenAPI document and fails if the committed collection is stale. Change the generator at [`scripts/gen-postman-collection.mjs`](scripts/gen-postman-collection.mjs), never the generated collection by hand. Response documentation remains in the OpenAPI site; the collection contains requests without generated response examples.
 
 [⬆ back to top](#table-of-contents)
 
@@ -217,6 +241,7 @@ This writes a self-contained site into the git-ignored `build/docs` directory:
 
 - `index.html` — the same Stoplight Elements viewer Scramble serves, with the specification inlined, so it works from any host and any sub-path
 - `api.json` — the OpenAPI document
+- `favicon.svg` — the documentation favicon
 
 Pass `--path=` to build somewhere else.
 
@@ -224,7 +249,17 @@ Scramble reads the configured database schema to infer model attributes. Apply t
 
 ### Deployment
 
-[`.github/workflows/docs.yml`](.github/workflows/docs.yml) runs the complete Composer quality gate before building and publishing `build/docs` to GitHub Pages on pushes to `master`. It needs **Settings → Pages → Source: GitHub Actions** enabled once on the repository; the workflow can also be started by hand from the Actions tab on `master`.
+[`.github/workflows/docs.yml`](.github/workflows/docs.yml) runs the complete Composer quality gate and builds the documentation for pull requests into `master` and pushes to `master` or `issues/**`. Only successful runs on `master` upload the Pages artifact and deploy it to GitHub Pages. Deployments share a concurrency group to prevent overlapping publication. It needs **Settings → Pages → Source: GitHub Actions** enabled once on the repository; the workflow can also be started by hand from the Actions tab on `master`.
+
+[⬆ back to top](#table-of-contents)
+
+---
+
+## Database Schema Viewer
+
+[Laravel Truss](https://github.com/albertoarena/laravel-truss) is installed as a development dependency. With `APP_ENV=local` and the database migrated, open `/truss` on your local application to inspect tables, columns, and foreign keys. It reads schema structure, not application rows.
+
+The viewer and its schema endpoint return 404 outside the local environment. [`config/truss.php`](config/truss.php) also disables schema baseline files and the optional MCP server. No application provider depends on Truss, so production installs with `composer install --no-dev` can boot without it. Truss does not change migrations or application data.
 
 [⬆ back to top](#table-of-contents)
 
@@ -244,9 +279,9 @@ This checks Rector, Peck, Pint, PHPStan, Sloppy, and PHPUnit in that order. Slop
 composer run fix
 ```
 
-The test command uses array cache, and feature tests generate a temporary application key. The current suite does not require a local database or application key to be configured.
+The test command uses array cache, and feature tests generate a temporary application key. Ownership and token integration tests configure an in-memory SQLite database and run migrations automatically; they never use your configured application database. The suite requires the PDO SQLite extension but no local database or application key.
 
-GitHub Actions runs the same `composer test` gate for pull requests into `master` and pushes to `master` or `issues/**`. CI uses PHP 8.5 with coverage and spelling tools, installs locked dependencies with Composer scripts disabled, and supplies a temporary application key and array cache. No database setup is needed for the current tests. Rector excludes Laravel's generated `bootstrap/cache` files; application source remains checked.
+GitHub Actions runs the same `composer test` gate for pull requests into `master` and pushes to `master` or `issues/**`. CI uses PHP 8.5 with coverage and spelling tools, installs locked dependencies with Composer scripts disabled, and supplies a temporary application key and array cache. Ownership tests create their own in-memory SQLite schema. Rector excludes Laravel's generated `bootstrap/cache` files; application source remains checked.
 
 During development, run the smallest relevant test first:
 

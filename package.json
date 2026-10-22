@@ -3,7 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "postman:generate": "node scripts/gen-postman-collection.mjs",
+    "postman:check": "node scripts/gen-postman-collection.mjs --check",
+    "test:postman": "node scripts/gen-postman-collection.test.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.0.1",

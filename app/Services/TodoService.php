@@ -21,7 +21,7 @@ class TodoService
     /**
      * Get all todos.
      *
-     * @return Collection
+     * @return Collection<int, Todo>
      */
     public function getAllTodos()
     {
@@ -38,6 +38,8 @@ class TodoService
 
     /**
      * Create a new todo.
+     *
+     * @param  array<string, mixed>  $data
      */
     public function createTodo(array $data): Todo
     {
@@ -46,6 +48,8 @@ class TodoService
 
     /**
      * Update a todo.
+     *
+     * @param  array<string, mixed>  $data
      */
     public function updateTodo(int $id, array $data): Todo
     {

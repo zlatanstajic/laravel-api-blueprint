@@ -13,6 +13,7 @@ use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\StreamedEvent;
+use Illuminate\Support\Facades\Log;
 use Mockery;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -22,6 +23,8 @@ class TokenControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Log::swap(Mockery::spy(\Psr\Log\LoggerInterface::class));
 
         $c = new Container;
         Container::setInstance($c);
@@ -186,7 +189,7 @@ class TokenControllerTest extends TestCase
         $resp = $ctrl->create($req);
 
         $this->assertInstanceOf(JsonResponse::class, $resp);
-        $this->assertSame(401, $resp->getStatusCode());
-        $this->assertSame(['error' => 'bad creds'], $resp->getData(true));
+        $this->assertSame(500, $resp->getStatusCode());
+        $this->assertSame(['error' => 'ok'], $resp->getData(true));
     }
 }

@@ -8,6 +8,7 @@ return [
         'welcome' => 'Dobrodošli u Laravel API Blueprint',
     ],
     'error' => [
+        'internal_server_error' => 'Došlo je do neočekivane greške.',
         'invalid_credentials' => 'Neispravni podaci za prijavu',
     ],
     'user' => [

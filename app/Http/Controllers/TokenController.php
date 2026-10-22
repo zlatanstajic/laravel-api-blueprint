@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\User\UserInvalidCredentialsException;
 use App\Services\TokenService;
-use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 /**
  * Token Controller
@@ -36,8 +38,10 @@ class TokenController extends Controller
                     $data['password'],
                 ),
             ]);
-        } catch (Exception $e) {
-            return $this->errorResponse($e->getMessage(), $e->getCode());
+        } catch (UserInvalidCredentialsException $e) {
+            return $this->errorResponse($e->getMessage(), Response::HTTP_UNAUTHORIZED);
+        } catch (Throwable $e) {
+            return $this->serverErrorResponse($e);
         }
     }
 }

@@ -8,10 +8,10 @@ use App\Exceptions\Todo\TodoDeleteFailedException;
 use App\Exceptions\Todo\TodoNotFoundException;
 use App\Http\Resources\TodoResource;
 use App\Services\TodoService;
-use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 /**
  * Todo Controller
@@ -34,8 +34,8 @@ class TodoController extends Controller
                     $this->todoService->getAllTodos()
                 )
             );
-        } catch (Exception $e) {
-            return $this->errorResponse($e->getMessage());
+        } catch (Throwable $e) {
+            return $this->serverErrorResponse($e);
         }
     }
 
@@ -50,8 +50,10 @@ class TodoController extends Controller
             throw_unless($todo, TodoNotFoundException::class);
 
             return $this->successResponse(new TodoResource($todo));
-        } catch (Exception $e) {
-            return $this->errorResponse($e->getMessage(), $e->getCode());
+        } catch (TodoNotFoundException $e) {
+            return $this->errorResponse($e->getMessage(), Response::HTTP_NOT_FOUND);
+        } catch (Throwable $e) {
+            return $this->serverErrorResponse($e);
         }
     }
 
@@ -73,8 +75,8 @@ class TodoController extends Controller
                 data: new TodoResource($this->todoService->createTodo($data)),
                 code: Response::HTTP_CREATED
             );
-        } catch (Exception $e) {
-            return $this->errorResponse($e->getMessage());
+        } catch (Throwable $e) {
+            return $this->serverErrorResponse($e);
         }
     }
 
@@ -93,8 +95,10 @@ class TodoController extends Controller
             return $this->successResponse(
                 new TodoResource($this->todoService->updateTodo($id, $data))
             );
-        } catch (Exception $e) {
-            return $this->errorResponse($e->getMessage(), $e->getCode());
+        } catch (TodoNotFoundException $e) {
+            return $this->errorResponse($e->getMessage(), Response::HTTP_NOT_FOUND);
+        } catch (Throwable $e) {
+            return $this->serverErrorResponse($e);
         }
     }
 
@@ -107,8 +111,10 @@ class TodoController extends Controller
             throw_unless($this->todoService->deleteTodo($id), TodoDeleteFailedException::class);
 
             return $this->successResponse();
-        } catch (Exception $e) {
-            return $this->errorResponse($e->getMessage(), $e->getCode());
+        } catch (TodoDeleteFailedException $e) {
+            return $this->errorResponse($e->getMessage(), Response::HTTP_CONFLICT);
+        } catch (Throwable $e) {
+            return $this->serverErrorResponse($e);
         }
     }
 }

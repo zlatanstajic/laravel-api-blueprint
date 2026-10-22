@@ -22,6 +22,8 @@ class TodoRepository
 
     /**
      * Get all todos.
+     *
+     * @return Collection<int, Todo>
      */
     public function getAll(): Collection
     {
@@ -44,6 +46,8 @@ class TodoRepository
 
     /**
      * Create a new todo.
+     *
+     * @param  array<string, mixed>  $data
      */
     public function create(array $data): Todo
     {
@@ -52,6 +56,8 @@ class TodoRepository
 
     /**
      * Update a todo.
+     *
+     * @param  array<string, mixed>  $data
      *
      * @throws TodoNotFoundException
      */

@@ -8,6 +8,7 @@ return [
         'welcome' => 'Welcome to the Laravel API Blueprint',
     ],
     'error' => [
+        'internal_server_error' => 'An unexpected error occurred.',
         'invalid_credentials' => 'Invalid credentials',
     ],
     'user' => [

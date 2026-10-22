@@ -17,7 +17,7 @@ env:
   APP_ENV: testing
   CACHE_STORE: array
 
-# Never let two Pages deployments race; queue them instead.
+# Serialize each ref's workflow runs. Pages deployment has its own shared group.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
@@ -26,9 +26,12 @@ jobs:
   quality:
     name: Composer quality gate
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -55,13 +58,15 @@ jobs:
   build:
     name: Build static documentation
     needs: quality
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       DB_CONNECTION: sqlite
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -84,7 +89,22 @@ jobs:
       - name: Build documentation
         run: php artisan docs:build
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install documentation tools
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Validate Postman generation
+        run: |
+          npm run test:postman
+          npm run postman:check
+
       - name: Upload Pages artifact
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
         uses: actions/upload-pages-artifact@v3
         with:
           path: build/docs
@@ -92,7 +112,12 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
     permissions:
       pages: write
       id-token: write

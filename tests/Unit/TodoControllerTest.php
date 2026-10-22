@@ -14,6 +14,7 @@ use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\StreamedEvent;
+use Illuminate\Support\Facades\Log;
 use Mockery;
 use PHPUnit\Framework\TestCase;
 use ReflectionException;
@@ -26,6 +27,8 @@ class TodoControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Log::swap(Mockery::spy(\Psr\Log\LoggerInterface::class));
 
         $c = new Container;
         Container::setInstance($c);
@@ -349,7 +352,7 @@ class TodoControllerTest extends TestCase
 
         $this->assertInstanceOf(JsonResponse::class, $resp);
         $this->assertSame(500, $resp->getStatusCode());
-        $this->assertSame(['error' => 'index fail'], $resp->getData(true));
+        $this->assertSame(['error' => 'ok'], $resp->getData(true));
     }
 
     public function test_store_handles_service_exception(): void
@@ -371,7 +374,7 @@ class TodoControllerTest extends TestCase
 
         $this->assertInstanceOf(JsonResponse::class, $resp);
         $this->assertSame(500, $resp->getStatusCode());
-        $this->assertSame(['error' => 'store fail'], $resp->getData(true));
+        $this->assertSame(['error' => 'ok'], $resp->getData(true));
     }
 
     public function test_update_handles_service_exception(): void
@@ -391,7 +394,7 @@ class TodoControllerTest extends TestCase
         $resp = $controller->update($request, 5);
 
         $this->assertInstanceOf(JsonResponse::class, $resp);
-        $this->assertSame(422, $resp->getStatusCode());
-        $this->assertSame(['error' => 'update fail'], $resp->getData(true));
+        $this->assertSame(500, $resp->getStatusCode());
+        $this->assertSame(['error' => 'ok'], $resp->getData(true));
     }
 }

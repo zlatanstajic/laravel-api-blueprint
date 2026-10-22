@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
  * UserScope
  *
  * A global scope to restrict queries to the authenticated user's records.
+ *
+ * @implements Scope<Model>
  */
 class UserScope implements Scope
 {

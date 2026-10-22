@@ -1,10 +1,10 @@
 # Laravel API Blueprint Project Rules
 
-Guidance for any coding agent working in this repository. Claude Code loads it through [`CLAUDE.md`](CLAUDE.md).
+The single source of project guidance for any coding agent working in this repository. [`CLAUDE.md`](CLAUDE.md) imports this file; add shared rules here.
 
 ## Overview
 
-Laravel API Blueprint is a Laravel 13 / PHP 8.5.x JSON API for personal todo items, authenticated with Laravel Sanctum personal access tokens. There is no meaningful frontend: `resources/views` holds a single welcome page, and `package.json` exists only to install the Husky pre-commit hook. Every todo belongs to exactly one user, and that ownership is enforced by a global Eloquent scope rather than by per-query `where` clauses.
+Laravel API Blueprint is a Laravel 13 / PHP 8.5.x JSON API for personal todo items, authenticated with Laravel Sanctum personal access tokens. There is no meaningful frontend: `resources/views` holds a single welcome page, and `package.json` installs Husky and the OpenAPI-to-Postman documentation tool. Every todo belongs to exactly one user, and that ownership is enforced by a global Eloquent scope rather than by per-query `where` clauses.
 
 ## Commands
 
@@ -46,19 +46,20 @@ php artisan test --compact --filter=test_name
 - `App\Http\Controllers\Controller` is an abstract base providing `successResponse()` (wraps the payload in `data`) and `errorResponse()` (wraps the message in `error`). Extend it; do not build ad-hoc `response()->json()` envelopes in a controller.
 - API output goes through `App\Http\Resources\TodoResource`, which emits a fixed `type` / `id` / `attributes` shape. Adding a column to the todos table does not expose it: add it to the resource too.
 
-## Error responses: validate before the `try`, and only pass `getCode()` where every exception carries an HTTP status
+## Error responses: validate before the `try`, and expose only expected domain failures
 
-- Controllers call `$request->validate()` before their `try` block, so the `ValidationException` reaches Laravel's handler and renders as a 422 with `message` and `errors`. Never move validation inside the `try`: the `catch (Exception)` would swallow it, and its `getCode()` of `0` makes `response()->json(..., 0)` throw, which turns every invalid request into a 500. `tests/Feature/ApiValidationTest.php` guards this.
-- [`bootstrap/app.php`](bootstrap/app.php) renders exceptions as JSON for every `api/*` request and never redirects unauthenticated guests. Clients therefore get the 422 and 401 JSON bodies without sending `Accept: application/json`. The application defines no `login` route, so Laravel's default guest redirect would turn a missing token into a 500; `tests/Feature/ApiAuthenticationTest.php` guards this.
-- Inside the `try`, controllers catch `Exception` and convert it with `errorResponse()`. The domain exceptions in `app/Exceptions` each set a real status in their constructor (`TodoNotFoundException` 404, `TodoDeleteFailedException` 409, `UserNotFoundException` 404, `UserInvalidCredentialsException` 401), so passing `$e->getCode()` is safe on those paths.
-- `TodoController::index()` and `TodoController::store()` deliberately omit the code and fall back to 500. Their `try` blocks reach only persistence, whose exceptions carry no HTTP status. Do not "improve" those two calls by adding `$e->getCode()`.
-- A new domain exception must extend `Exception`, set its message from a translation key, and pass a `Symfony\Component\HttpFoundation\Response` constant as the code.
+- Controllers validate before their `try` block, so invalid input reaches Laravel's handler as a 422 with `message` and `errors`. Never move validation inside the `try`.
+- `bootstrap/app.php` renders API exceptions as JSON and avoids guest redirects; missing authentication remains a JSON 401 without an Accept header.
+- Controllers handle expected domain failures in specific catch blocks. Only `TodoNotFoundException` (404), `TodoDeleteFailedException` (409), and `UserInvalidCredentialsException` (401) may expose their translated domain messages and status codes. Every other `Throwable` returns the translated generic 500 response through `serverErrorResponse()`, regardless of its message or code. Never trust an arbitrary exception's `getCode()` as an HTTP status. Pass the caught failure to `serverErrorResponse()`; it logs only the exception type and source file/line, never the message, exception object, trace, or request data.
+- Token authentication uses `UserInvalidCredentialsException` for both unknown email addresses and incorrect passwords. Do not reveal account existence through different response statuses or messages. Unknown-email attempts perform a discarded hash with the configured algorithm and cost; keep that work independent of the submitted password.
+- Domain exceptions extend `Exception`, resolve messages from translation keys, and use `Symfony\Component\HttpFoundation\Response` constants as their codes. Catch domain exceptions explicitly at the controller operations that expect them.
+- `tests/Feature/ApiExceptionTest.php`, `ApiAuthenticationTest.php`, `ApiValidationTest.php`, and `TokenAuthenticationTest.php` guard these response boundaries.
 
 ## Unit tests are stub-based and do not boot the database
 
 - `tests/Unit` extends `PHPUnit\Framework\TestCase` directly (not `Tests\TestCase`) and drives repositories through hand-written subclasses such as `TodoStub`, which override `all()`, `findOrFail()`, `create()`, and `destroy()` with static fixtures. There is no `RefreshDatabase`, no migration run, and no container by default.
 - Follow that pattern for new unit tests rather than reaching for a database. Reset the stub's static properties in `setUp()`; leftover state leaks between tests.
-- `tests/Feature` extends `Tests\TestCase` and holds tests that never reach the database: the framework's example test, validation responses, and factory states. A feature test that does reach the database needs its own database setup — adding one is fine, but do not convert the existing stub-based unit tests to it.
+- `tests/Feature` extends `Tests\TestCase`. Authentication, validation, and factory tests do not require a database; `TodoOwnershipTest` uses real bearer tokens and `RefreshDatabase`, explicitly setting SQLite `:memory:` and clearing the connection URL before migrations. Keep database integration tests isolated from the configured application database, and do not convert the existing stub-based unit tests to them.
 
 ## User-facing strings live in translation files
 
@@ -68,9 +69,9 @@ php artisan test --compact --filter=test_name
 ## Conventions
 
 - Every PHP file starts with `declare(strict_types=1);`. Rector's PHP sets and the Laravel set list run in the gate, so hand-written code that Rector would rewrite fails `composer test:rector`; run `composer fix` first.
-- PHPStan runs at level 5 over `app` with Larastan. Do not add entries to `ignoreErrors`; fix the type instead.
+- PHPStan runs at level 6 over `app` with Larastan. Do not add entries to `ignoreErrors`; fix the type instead.
 - Formatting is Laravel Pint with the custom rules in [`pint.json`](pint.json). Classes and public methods carry short docblocks — match the surrounding density rather than stripping them.
-- Routes live in `routes/api.php` under a `throttle:60,1` group, with a stricter `throttle:3,1` on `POST /api/tokens`. Named routes follow `resource.action`.
+- Routes live in `routes/api.php` under a `throttle:60,1,api:` group, with a stricter `throttle:3,1,tokens:` on `POST /api/tokens`. Keep the key prefixes distinct so the counters cannot collide. Named routes follow `resource.action`.
 - The default database is SQLite at `database/database.sqlite`, created by `composer setup`. `composer setup` runs `migrate:fresh` and destroys existing local data.
 - Branch names are kebab-case, off `master`, prefixed by the issue they close: `issues/12-short-description`. Do not use snake_case or camelCase in a branch name.
 - Never read or write `.env`, and never commit credentials. The seeded admin account is configured through `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`, which `config/app.php` exposes as `app.admin`; `UserFactory::admin()` reads that config. Call `env()` only inside `config/`: once the configuration is cached, `env()` elsewhere returns its fallback.
@@ -82,9 +83,15 @@ php artisan test --compact --filter=test_name
 - Document metadata (title, description, version, server list) lives in [`config/scramble.php`](config/scramble.php). Bump `info.version` there when the API surface changes.
 - `php artisan docs:build` (defined in [`routes/console.php`](routes/console.php)) renders Scramble's own Blade view to a static `index.html` with the spec inlined, plus `api.json`. Do not hand-write a viewer page; the command reuses the package view so the static site and `/docs/api` cannot diverge.
 - `dedoc/scramble` is a **dev** dependency. Keep every reference to it out of `app/` and out of service providers, or a `composer install --no-dev` deploy breaks at boot. `routes/console.php` is safe because it is only loaded in the console.
-- [`.github/workflows/docs.yml`](.github/workflows/docs.yml) runs `composer test` on pull requests into `master` and pushes to `master` or `issues/**`; successful validation gates documentation deployment from `master`. Only the deployment job has Pages and OIDC write permissions.
+- [`.github/workflows/docs.yml`](.github/workflows/docs.yml) runs `composer test` on pull requests into `master` and pushes to `master` or `issues/**`; successful validation gates a documentation build for every triggered run, with artifact upload and deployment restricted to `master`. Pages deployments share a concurrency group. Only the deployment job has Pages and OIDC write permissions.
+
+## Development schema viewer
+
+- Truss is a development dependency. `config/truss.php` enables its viewer only when `APP_ENV=local`, disables baseline-file writes, and disables its optional MCP server. Keep package references out of application providers so no-dev installs remain bootable.
+- `/truss` and `/truss/api/schema` expose schema structure locally; never enable them for public environments. `tests/Feature/SchemaViewerTest.php` verifies local access and non-local denial.
 
 ## Generated assets
 
 - [`assets/img/og-image.png`](assets/img/og-image.png) is produced by [`scripts/gen-og-image.py`](scripts/gen-og-image.py) (Pillow, deterministic output). Edit the script and rerun `python3 scripts/gen-og-image.py`; never hand-edit the PNG.
+- The Postman collection is generated by `scripts/gen-postman-collection.mjs` from Scramble OpenAPI. Run `composer docs:postman` after API changes, `npm run test:postman` for generator tests, and `npm run postman:check` after building docs to detect drift. Never hand-edit the collection or embed credentials. CI checks it during the documentation build.
 - `_ide_helper.php`, `_ide_helper_models.php`, and `.phpstorm.meta.php` are generated by `composer artisan:ide-helper` and are git-ignored.

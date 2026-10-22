@@ -1,231 +1,301 @@
 {
-	"info": {
-		"_postman_id": "3aeca4c0-65ef-4d73-b2a0-e4614e27e943",
-		"name": "laravel-api-blueprint",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "14763304"
-	},
-	"item": [
-		{
-			"name": "tokens",
-			"item": [
-				{
-					"name": "create token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"// Parse the response JSON",
-									"var jsonData = pm.response.json();",
-									"",
-									"// Check if the token exists",
-									"if (jsonData?.data?.token) {",
-									"    pm.environment.set(\"ACCESS_TOKEN\", jsonData.data.token);",
-									"    console.log(\"ACCESS_TOKEN set:\", jsonData.data.token);",
-									"} else {",
-									"    console.log(\"Token not found in response\");",
-									"}"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "noauth"
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"{{ADMIN_EMAIL}}\",\n    \"password\": \"{{ADMIN_PASSWORD}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{BASE_URL}}/tokens",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"tokens"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "todos",
-			"item": [
-				{
-					"name": "all todos",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{BASE_URL}}/todos",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"todos"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "create todo",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"title\": \"Buy groceries\",\n  \"description\": \"Milk, Bread, Eggs\",\n  \"completed\": false\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{BASE_URL}}/todos",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"todos"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "single todo",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{BASE_URL}}/todos/1",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"todos",
-								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "delete single todo",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{BASE_URL}}/todos/6",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"todos",
-								"6"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "update single todo",
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"title\": \"Buy more groceries\",\n  \"completed\": true\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{BASE_URL}}/todos/1",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"todos",
-								"1"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "welcome",
-			"request": {
-				"auth": {
-					"type": "noauth"
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{BASE_URL}}/",
-					"host": [
-						"{{BASE_URL}}"
-					],
-					"path": [
-						""
-					]
-				}
-			},
-			"response": []
-		}
-	],
-	"auth": {
-		"type": "bearer",
-		"bearer": [
-			{
-				"key": "token",
-				"value": "{{ACCESS_TOKEN}}",
-				"type": "string"
-			}
-		]
-	},
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"type": "text/javascript",
-				"packages": {},
-				"exec": [
-					"pm.request.headers.add({",
-					"    key: 'Accept',",
-					"    value: 'application/json'",
-					"});"
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"type": "text/javascript",
-				"packages": {},
-				"exec": [
-					""
-				]
-			}
-		}
-	]
+  "info": {
+    "name": "Laravel API Blueprint",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Generated from Scramble OpenAPI. Regenerate with composer docs:postman."
+  },
+  "item": [
+    {
+      "name": "API",
+      "item": [
+        {
+          "name": "API Home Route",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                ""
+              ],
+              "query": [],
+              "variable": []
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {}
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Todo",
+      "item": [
+        {
+          "name": "Get all todos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/todos",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "todos"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "auth": null,
+            "body": {}
+          },
+          "response": []
+        },
+        {
+          "name": "Create a new todo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/todos",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "todos"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Example value\",\n  \"description\": null,\n  \"completed\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get a specific todo by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/todos/:id",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "todos",
+                ":id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{TODO_ID}}"
+                }
+              ]
+            },
+            "auth": null,
+            "body": {}
+          },
+          "response": []
+        },
+        {
+          "name": "Update an existing todo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/todos/:id",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "todos",
+                ":id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{TODO_ID}}"
+                }
+              ]
+            },
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Example value\",\n  \"description\": null,\n  \"completed\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a todo",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/todos/:id",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "todos",
+                ":id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{TODO_ID}}"
+                }
+              ]
+            },
+            "auth": null,
+            "body": {}
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Token",
+      "item": [
+        {
+          "name": "Authenticate user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/tokens",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "tokens"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{ADMIN_EMAIL}}\",\n  \"password\": \"{{ADMIN_PASSWORD}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.environment.set(\"ACCESS_TOKEN\", pm.response.json().data.token);",
+                  "} else {",
+                  "  pm.environment.unset(\"ACCESS_TOKEN\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "TODO_ID",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{ACCESS_TOKEN}}",
+        "type": "string"
+      }
+    ]
+  }
 }
